@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -30,6 +32,7 @@ func main() {
 	e.POST("/upload", uploadFile)
 	e.GET("/file/:id/:name", downloadFile)
 	e.DELETE("/file/:id/:name", deleteFile)
+	e.GET("/files", listFiles)
 
 	// Start server
 	e.Logger.Fatal(e.Start(":8081"))
@@ -63,8 +66,11 @@ func uploadFile(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, "Failed to copy file")
 	}
 
+	// URL encode the file name to handle spaces and special characters
+	encodedFileName := url.PathEscape(file.Filename)
+
 	// Return the download URL
-	url := fmt.Sprintf("http://%s/file/%s/%s", c.Request().Host, shortUUID, file.Filename)
+	url := fmt.Sprintf("http://%s/file/%s/%s", c.Request().Host, shortUUID, encodedFileName)
 	return c.JSON(http.StatusOK, map[string]string{
 		"url":  url,
 		"name": file.Filename,
@@ -76,8 +82,14 @@ func downloadFile(c echo.Context) error {
 	id := c.Param("id")
 	name := c.Param("name")
 
+	// URL decode the file name to get the original file name
+	decodedFileName, err := url.PathUnescape(name)
+	if err != nil {
+		return c.String(http.StatusBadRequest, "Invalid file name")
+	}
+
 	// Search for the file with the corresponding UUID and filename
-	filePath := filepath.Join(uploadDir, id+"_"+name)
+	filePath := filepath.Join(uploadDir, id+"_"+decodedFileName)
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		return c.String(http.StatusNotFound, "File not found")
 	}
@@ -91,8 +103,14 @@ func deleteFile(c echo.Context) error {
 	id := c.Param("id")
 	name := c.Param("name")
 
+	// URL decode the file name to get the original file name
+	decodedFileName, err := url.PathUnescape(name)
+	if err != nil {
+		return c.String(http.StatusBadRequest, "Invalid file name")
+	}
+
 	// Search for the file with the corresponding UUID and filename
-	filePath := filepath.Join(uploadDir, id+"_"+name)
+	filePath := filepath.Join(uploadDir, id+"_"+decodedFileName)
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		return c.String(http.StatusNotFound, "File not found")
 	}

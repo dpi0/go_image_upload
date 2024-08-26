@@ -20,7 +20,7 @@ else
 fi
 
 # Base URL for operations
-base_url="http://localhost:8081"
+base_url="http://localhost:8080"
 
 case $command in
     upload)

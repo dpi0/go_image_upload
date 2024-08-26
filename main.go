@@ -122,3 +122,38 @@ func deleteFile(c echo.Context) error {
 
 	return c.String(http.StatusOK, "File deleted successfully")
 }
+
+// listFiles returns a list of all uploaded files in JSON format
+func listFiles(c echo.Context) error {
+	var files []map[string]string
+
+	err := filepath.Walk(uploadDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() {
+			fileName := info.Name()
+			parts := strings.SplitN(fileName, "_", 2)
+			if len(parts) == 2 {
+				shortUUID := parts[0]
+				originalFileName := parts[1]
+
+				// URL encode the file name to handle spaces and special characters
+				encodedFileName := url.PathEscape(originalFileName)
+
+				fileURL := fmt.Sprintf("http://%s/file/%s/%s", c.Request().Host, shortUUID, encodedFileName)
+				files = append(files, map[string]string{
+					"url":  fileURL,
+					"name": originalFileName,
+				})
+			}
+		}
+		return nil
+	})
+
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "Failed to list files")
+	}
+
+	return c.JSON(http.StatusOK, files)
+}

@@ -11,6 +11,7 @@ import (
 	"github.com/dpi0/go_image_upload/pkg/utils"
 
 	"github.com/labstack/echo/v4"
+	"github.com/rs/zerolog/log"
 )
 
 // UploadFile handles the business logic for uploading a file
@@ -18,13 +19,15 @@ func UploadFile(c echo.Context) (string, error) {
 	// Get the uploaded file
 	file, err := c.FormFile("file")
 	if err != nil {
-		return "", fmt.Errorf("Failed to get file: %w", err)
+		log.Error().Err(err).Msg("Failed to get file")
+		return "", fmt.Errorf("failed to get file: %w", err)
 	}
 
 	// Open the uploaded file
 	src, err := file.Open()
 	if err != nil {
-		return "", fmt.Errorf("Failed to open file: %w", err)
+		log.Error().Err(err).Msg("Failed to open file")
+		return "", fmt.Errorf("failed to open file: %w", err)
 	}
 	defer src.Close()
 
@@ -36,7 +39,8 @@ func UploadFile(c echo.Context) (string, error) {
 
 	// Save the file to the storage
 	if err := storage.SaveFile(src, dstPath); err != nil {
-		return "", fmt.Errorf("Failed to save file: %w", err)
+		log.Error().Err(err).Msg("Failed to save file")
+		return "", fmt.Errorf("failed to save file: %w", err)
 	}
 
 	// Return the download URL
@@ -53,9 +57,11 @@ func DownloadFile(c echo.Context) (string, error) {
 	filePath, err := storage.GetFilePath(id, name)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return "", fmt.Errorf("File not found: %w", err)
+			log.Warn().Err(err).Msg("File not found")
+			return "", fmt.Errorf("file not found: %w", err)
 		}
-		return "", fmt.Errorf("Failed to get file path: %w", err)
+		log.Error().Err(err).Msg("Failed to get file path")
+		return "", fmt.Errorf("failed to get file path: %w", err)
 	}
 
 	return filePath, nil
@@ -70,16 +76,20 @@ func DeleteFile(c echo.Context) error {
 	filePath, err := storage.GetFilePath(id, name)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return fmt.Errorf("File not found: %w", err)
+			log.Warn().Err(err).Msg("File not found")
+			return fmt.Errorf("file not found: %w", err)
 		}
-		return fmt.Errorf("Failed to get file path: %w", err)
+		log.Error().Err(err).Msg("Failed to get file path")
+		return fmt.Errorf("failed to get file path: %w", err)
 	}
 
 	// Delete the file from storage
 	if err := storage.DeleteFile(filePath); err != nil {
-		return fmt.Errorf("Failed to delete file: %w", err)
+		log.Error().Err(err).Msg("Failed to delete file")
+		return fmt.Errorf("ailed to delete file: %w", err)
 	}
 
+	log.Info().Msg("File deleted successfully")
 	return nil
 }
 
@@ -89,6 +99,7 @@ func ListFiles(c echo.Context) ([]map[string]string, error) {
 
 	err := filepath.Walk(storage.UploadDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
+			log.Error().Err(err).Msg("Failed to walk directory")
 			return err
 		}
 		if !info.IsDir() {
@@ -112,8 +123,10 @@ func ListFiles(c echo.Context) ([]map[string]string, error) {
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("Failed to list files: %w", err)
+		log.Error().Err(err).Msg("Failed to list files")
+		return nil, fmt.Errorf("failed to list files: %w", err)
 	}
 
+	log.Info().Msg("Files listed successfully")
 	return files, nil
 }

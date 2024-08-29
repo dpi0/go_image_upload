@@ -11,9 +11,9 @@ import (
 
 func RegisterRoutes(e *echo.Echo) {
 	e.POST("/upload", UploadFile)
-	e.GET("/file/:id/:name", DownloadFile)
+	e.GET("/:id/:name", DownloadFile)
 	e.GET("/files", ListFiles)
-	e.DELETE("/file/:id/:name", DeleteFile)
+	e.DELETE("/:id/:name", DeleteFile)
 }
 
 func UploadFile(c echo.Context) error {

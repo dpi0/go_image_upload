@@ -44,7 +44,7 @@ func UploadFile(c echo.Context) (string, error) {
 	}
 
 	// Return the download URL
-	url := fmt.Sprintf("http://%s/file/%s/%s", c.Request().Host, shortUUID, file.Filename)
+	url := fmt.Sprintf("http://%s/%s/%s", c.Request().Host, shortUUID, file.Filename)
 	return url, nil
 }
 
@@ -112,7 +112,7 @@ func ListFiles(c echo.Context) ([]map[string]string, error) {
 				// URL encode the file name to handle spaces and special characters
 				encodedFileName := url.PathEscape(originalFileName)
 
-				fileURL := fmt.Sprintf("http://%s/file/%s/%s", c.Request().Host, shortUUID, encodedFileName)
+				fileURL := fmt.Sprintf("http://%s/%s/%s", c.Request().Host, shortUUID, encodedFileName)
 				files = append(files, map[string]string{
 					"url":  fileURL,
 					"name": originalFileName,

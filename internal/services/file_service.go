@@ -23,6 +23,25 @@ func UploadFile(c echo.Context) (string, error) {
 		return "", fmt.Errorf("failed to get file: %w", err)
 	}
 
+	// Get the original file name without UUID prefix
+	originalFileName := file.Filename
+
+	// Check if a file with the same name already exists
+	files, err := os.ReadDir(storage.UploadDir)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to read directory")
+		return "", fmt.Errorf("failed to read directory: %w", err)
+	}
+
+	for _, f := range files {
+		// Remove UUID prefix from file name for comparison
+		filenameWithoutUUID := strings.Split(f.Name(), "_")[1]
+		if filenameWithoutUUID == originalFileName {
+			log.Warn().Msgf("File %s already exists. Upload canceled.", originalFileName)
+			// Return a JSON error response
+			return `{"error": "file already exists"}`, fmt.Errorf("file %s already exists", originalFileName)
+		}
+	}
 	// Open the uploaded file
 	src, err := file.Open()
 	if err != nil {

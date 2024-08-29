@@ -11,7 +11,7 @@ import (
 
 func RegisterRoutes(e *echo.Echo) {
 	e.POST("/upload", UploadFile)
-	e.GET("/:id/:name", DownloadFile)
+	e.GET("/:id/:name", GetFile)
 	e.GET("/files", ListFiles)
 	e.DELETE("/:id/:name", DeleteFile)
 }
@@ -31,19 +31,19 @@ func UploadFile(c echo.Context) error {
 	})
 }
 
-func DownloadFile(c echo.Context) error {
-	filePath, err := services.DownloadFile(c)
+func GetFile(c echo.Context) error {
+	filePath, err := services.GetFile(c)
 	if err != nil {
 		if err.Error() == "File not found" {
 			log.Warn().Err(err).Msg("File not found")
 			return c.String(http.StatusNotFound, err.Error())
 		}
-		log.Error().Err(err).Msg("Failed to download file")
+		log.Error().Err(err).Msg("Failed to fetch file")
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
 
-	// Serve the file for download
-	log.Info().Msg("File downloaded successfully")
+	// Serve the file
+	log.Info().Msg("File fetched successfully")
 	return c.File(filePath)
 }
 

@@ -68,7 +68,7 @@ func UploadFile(c echo.Context) (string, error) {
 }
 
 // DownloadFile handles the business logic for downloading a file
-func DownloadFile(c echo.Context) (string, error) {
+func GetFile(c echo.Context) (string, error) {
 	id := c.Param("id")
 	name := c.Param("name")
 
